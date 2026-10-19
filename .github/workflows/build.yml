@@ -11,11 +11,17 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y git zip unzip openjdk-17-jdk autoconf libtool pkg-config zlib1g-dev libncurses5-dev libncursesw5-dev libtinfo6 cmake libffi-dev libssl-dev build-essential ccache
+          sudo apt-get install -y git zip unzip openjdk-17-jdk autoconf automake libtool libltdl-dev pkg-config zlib1g-dev libncurses5-dev libncursesw5-dev libtinfo6 cmake libffi-dev libssl-dev build-essential ccache
           pip install --upgrade pip
           pip install buildozer "cython<3" virtualenv setuptools
       - name: Build APK
-        run: buildozer -v android debug
+        run: |
+          set -o pipefail
+          buildozer -v android debug 2>&1 | tee build.log
+      - name: Show errors
+        if: failure()
+        run: |
+          grep -n -i -E "command failed|traceback|error:|fatal" build.log | tail -n 25 || true
       - uses: actions/upload-artifact@v4
         with:
           name: package
